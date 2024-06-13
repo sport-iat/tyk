@@ -88,8 +88,8 @@ mongo-shell:
 .PHONY: docker docker-std
 
 docker:
-	docker build --platform ${BUILD_PLATFORM} --rm -t internal/tyk-gateway .
+	docker build --build-arg http_proxy --build-arg https_proxy --platform ${BUILD_PLATFORM} --rm -t internal/tyk-gateway .
 
 docker-std: build
-	docker build --platform ${BUILD_PLATFORM} --no-cache -t internal/tyk-gateway:std -f ci/Dockerfile.std .
+	docker build --build-arg http_proxy --build-arg https_proxy --platform ${BUILD_PLATFORM} --no-cache -t internal/tyk-gateway:std -f ci/Dockerfile.std .
 
