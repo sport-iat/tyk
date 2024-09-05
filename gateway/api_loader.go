@@ -588,7 +588,6 @@ func (d *DummyProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		r.URL.Scheme = "http"
 		if methodOverride := r.URL.Query().Get("method"); methodOverride != "" {
 			r.Method = methodOverride
 		}
@@ -598,6 +597,7 @@ func (d *DummyProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if h, found := d.Gw.apisHandlesByID.Load(d.SH.Spec.APIID); found {
 				if chain, ok := h.(*ChainObject); ok {
 					handler = chain.ThisHandler
+					r.URL.Path = "/" + d.SH.Spec.APIID + r.URL.Path
 				} else {
 					log.WithFields(logrus.Fields{"api_id": d.SH.Spec.APIID}).Debug("failed to cast stored api handles to *ChainObject")
 				}
@@ -609,6 +609,7 @@ func (d *DummyProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if h, found := d.Gw.apisHandlesByID.Load(targetAPI.APIID); found {
 					if chain, ok := h.(*ChainObject); ok {
 						handler = chain.ThisHandler
+						r.URL.Path = "/" + targetAPI.APIID + r.URL.Path
 					} else {
 						log.WithFields(logrus.Fields{"api_id": d.SH.Spec.APIID}).Debug("failed to cast stored api handles to *ChainObject")
 					}
@@ -620,12 +621,14 @@ func (d *DummyProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		r.URL.Scheme = ""
+		r.URL.Host = ""
+
 		// No need to handle errors, in all error cases limit will be set to 0
 		loopLevelLimit, _ := strconv.Atoi(r.URL.Query().Get("loop_limit"))
 		ctxSetCheckLoopLimits(r, r.URL.Query().Get("check_limits") == "true")
 
 		if origURL := ctxGetOrigRequestURL(r); origURL != nil {
-			r.URL.Host = origURL.Host
 			r.URL.RawQuery = origURL.RawQuery
 			ctxSetOrigRequestURL(r, nil)
 		}
